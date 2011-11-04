@@ -99,9 +99,6 @@ class AssistlyAPI(object):
         else:
             resource_url = resource
 
-        if method in ('POST','PUT'):
-            raise Exception(req.to_postdata()) # XXX
-
         # Sending request and getting the response
         connection.request(method, resource_url, body=req.to_postdata(), headers=headers)
         response = connection.getresponse()

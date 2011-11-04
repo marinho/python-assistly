@@ -43,21 +43,26 @@ Cache engine class
 Basic stuff
 -----------
 
+    >>> import simplejson
+    >>> fp = file(os.path.join(os.path.dirname(__file__), 'keys.json'))
+    >>> json = simplejson.loads(fp.read())
+    >>> fp.close()
+
 Starting on the API
 
-    >>> api = AssistlyAPI(cache_engine=cache_engine, base_url='marinho', key='',
-    ...         secret='')
+    >>> api = AssistlyAPI(cache_engine=cache_engine, base_url='marinho', key=json['key'],
+    ...         secret=json['secret'])
     >>> api.base_url
     'https://marinho.assistly.com/api/v1/'
 
 Setting a token manually
 
-    >>> api.set_token(token_key='', token_secret='')
-    >>> api.token_key
-    ''
+    >>> api.set_token(token_key=json['token_key'], token_secret=json['token_secret'])
+    >>> api.token_key == json['token_key']
+    True
 
-    >>> api.token_secret
-    ''
+    >>> api.token_secret == json['token_secret']
+    True
 
 Requesting an access token # TODO
 
