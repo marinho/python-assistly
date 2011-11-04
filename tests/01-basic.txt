@@ -1,0 +1,108 @@
+Basic tests on the API, authentication, etc.
+============================================
+
+    >>> from assistly import AssistlyAPI
+
+Cache engine class
+------------------
+
+    >>> import os
+    >>> import hashlib
+    >>> import urllib
+    >>> class CacheEngine(object):
+    ...     cache_temp_dir = '/tmp/assistly-cache/'
+    ...     enabled = True
+    ... 
+    ...     def make_file_path(self, key):
+    ...         if not os.path.exists(self.cache_temp_dir):
+    ...             os.makedirs(self.cache_temp_dir)
+    ...         return os.path.join(self.cache_temp_dir, key)
+    ... 
+    ...     def make_key(self, method, url, query_params, post_params):
+    ...         query_params = urllib.urlencode(query_params) if query_params else ''
+    ...         post_params = urllib.urlencode(post_params) if post_params else ''
+    ...         key = hashlib.sha1('.'.join([method, url, query_params, post_params])).hexdigest()
+    ...         return key
+    ...     
+    ...     def get(self, key):
+    ...         path = self.make_file_path(key)
+    ...         if self.enabled and os.path.exists(path):
+    ...             fp = file(path)
+    ...             data = fp.read()
+    ...             fp.close()
+    ...             return data
+    ...     
+    ...     def set(self, key, data):
+    ...         path = self.make_file_path(key)
+    ...         if self.enabled:
+    ...             fp = file(path, 'w')
+    ...             fp.write(data)
+    ...             fp.close()
+    >>> cache_engine = CacheEngine()
+
+Basic stuff
+-----------
+
+Starting on the API
+
+    >>> api = AssistlyAPI(cache_engine=cache_engine, base_url='marinho', key='',
+    ...         secret='')
+    >>> api.base_url
+    'https://marinho.assistly.com/api/v1/'
+
+Setting a token manually
+
+    >>> api.set_token(token_key='', token_secret='')
+    >>> api.token_key
+    ''
+
+    >>> api.token_secret
+    ''
+
+Requesting an access token # TODO
+
+    >>> #api.request_token()
+    >>> #api.token_key
+    >>> #api.token_secret
+
+Verifying credentials
+
+    >>> print api.verify_credentials().user.__class__.__name__
+    User
+
+API methods
+-----------
+
+Getting users
+
+    >>> users = api.users(count=5)
+    >>> for user in users[:1]:
+    ...     print type(user).__name__
+    User
+
+Getting topics
+
+    >>> topics = api.topics(count=5)
+    >>> for topic in topics[:1]:
+    ...     print type(topic).__name__
+    Topic
+
+Creating an interaction
+
+    >>> interaction = api.interaction_create(subject='New interaction from the API', customer_email='marinho@gmail.com')
+    >>> interaction
+
+Getting interactions
+
+    >>> interactions = api.interactions(case_id=interaction.case_id, count=1)
+    >>> for interaction in interactions[:1]:
+    ...     print type(interaction).__name__
+    Interaction
+
+Getting cases
+
+    >>> cases = api.cases(count=5)
+    >>> for case in cases[:1]:
+    ...     print type(case).__name__
+    Case
+
