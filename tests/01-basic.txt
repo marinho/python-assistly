@@ -2,7 +2,7 @@ Basic tests on the API, authentication, etc.
 ============================================
 
     >>> from assistly import AssistlyAPI
-    >>> from assistly.models import User, Case, Topic, Interaction, Customer, CustomerEmail
+    >>> from assistly.models import User, Group, Case, Topic, Interaction, Customer, CustomerEmail
 
 Cache engine class
 ------------------
@@ -84,6 +84,25 @@ Getting users
     >>> users = api.users(count=5)
     >>> for user in users[:1]:
     ...     isinstance(user, User)
+    True
+
+User show
+
+    >>> user = api.user_show(user_id=users[0].id)
+    >>> user.id == users[0].id
+    True
+
+Getting groups
+
+    >>> groups = api.groups(count=5)
+    >>> for group in groups[:1]:
+    ...     isinstance(group, Group)
+    True
+
+Group show
+
+    >>> group = api.group_show(group_id=groups[0].id)
+    >>> group.id == groups[0].id
     True
 
 Topics
@@ -189,7 +208,6 @@ Customer email create
 
 Customer email update
 
-    >>> customer = response.customer
     >>> new_email = datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S') + '@raminel3.com.br'
     >>> response = api.customer_email_update(customer.id, response.email.id, new_email)
     >>> isinstance(response.email, CustomerEmail)

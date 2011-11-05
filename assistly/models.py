@@ -2,9 +2,6 @@ class Model(object):
     def __init__(self, info):
         self._info = info
 
-        if not isinstance(info, dict): # XXX
-            raise Exception(info)
-
         for k,v in info.items():
             if k in RESULTS_MODELS and isinstance(v, dict):
                 v = RESULTS_MODELS[k](v)
@@ -37,8 +34,13 @@ class CustomerEmail(Model):
     def __str__(self):
         return self.email
 
+class Group(Model):
+    def __str__(self):
+        return self.name
+
 RESULTS_MODELS = {
     'user': User,
+    'group': Group,
     'case': Case,
     'topic': Topic,
     'interaction': Interaction,

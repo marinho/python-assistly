@@ -175,39 +175,18 @@ class AssistlyAPI(object):
     def users(self, count=None, page=None):
         return AssistlyResponse(self._get('users.json', {'count':count, 'page':page}))
 
+    def user_show(self, user_id, return_response=False):
+        resp = AssistlyResponse(self._get('users/%s.json'%user_id))
+        return resp if return_response else resp.user
+
+    def groups(self, count=None, page=None):
+        return AssistlyResponse(self._get('groups.json', {'count':count, 'page':page}))
+
+    def group_show(self, group_id, return_response=False):
+        resp = AssistlyResponse(self._get('groups/%s.json'%group_id))
+        return resp if return_response else resp.group
+
     def cases(self, **kwargs):
-        """
-        The valid kwargs parameters are:
-        - name
-        - first_name
-        - last_name
-        - email
-        - phone
-        - company
-        - twitter
-        - labels
-        - case_id
-        - subject
-        - description
-        - status
-        - priority
-        - assigned_group
-        - assigned_user
-        - channels
-        - notes
-        - attachments
-        - case_custom_key
-        - created
-        - updated
-        - since_created_at
-        - max_created_at
-        - since_updated_at
-        - max_updated_at
-        - since_id
-        - max_id
-        - count
-        - page
-        """
         return AssistlyResponse(self._get('cases.json', kwargs))
 
     def case_show(self, case_id, by=None, return_response=False):
@@ -220,27 +199,9 @@ class AssistlyAPI(object):
         return AssistlyResponse(self._put('cases/%s.json'%case_id, kwargs))
 
     def topics(self, **kwargs):
-        """
-        The valid kwargs parameters are:
-        - count
-        - page
-        """
         return AssistlyResponse(self._get('topics.json', kwargs))
 
     def interactions(self, **kwargs):
-        """
-        The valid kwargs parameters are:
-        - case_id
-        - channels
-        - since_created_at
-        - max_created_at
-        - since_updated_at
-        - max_updated_at
-        - since_id
-        - max_id
-        - count
-        - page
-        """
         return AssistlyResponse(self._get('interactions.json', kwargs))
 
     def interaction_create(self, **kwargs):
@@ -250,22 +211,6 @@ class AssistlyAPI(object):
         return AssistlyResponse(self._post('interactions.json', kwargs))
 
     def customers(self, **kwargs):
-        """
-        The valid kwargs parameters are:
-        - custom_key
-        - since_created_at
-        - max_created_at
-        - since_updated_at
-        - max_updated_at
-        - since_id
-        - max_id
-        - email
-        - twitter
-        - phone
-        - external_id
-        - count
-        - page
-        """
         return AssistlyResponse(self._get('customers.json', kwargs))
 
     def customer_create(self, **kwargs):
