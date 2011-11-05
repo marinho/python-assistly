@@ -28,7 +28,8 @@ class OAuthClient(oauth.Client):
                 DEFAULT_POST_CONTENT_TYPE)
 
         is_form_encoded = \
-            headers.get('Content-Type') == 'application/x-www-form-urlencoded'
+            ((headers.get('Content-Type') == 'application/x-www-form-urlencoded') and (method == "POST"))
+
 
         if is_form_encoded and body:
             parameters = oauth.parse_qs(body)
