@@ -12,6 +12,57 @@ except ImportError:
 
 from models import User, Case, Topic, Interaction, Customer, RESULTS_MODELS, CASE_STATUS_TYPE_IDS
 
+class OAuthClient(oauth.Client):
+    def request(self, uri, method="GET", body='', headers=None, 
+        redirections=httplib2.DEFAULT_MAX_REDIRECTS, connection_type=None):
+        DEFAULT_POST_CONTENT_TYPE = 'application/x-www-form-urlencoded'
+
+        if not isinstance(headers, dict):
+            headers = {}
+
+        if method == "POST":
+            headers['Content-Type'] = headers.get('Content-Type', 
+                DEFAULT_POST_CONTENT_TYPE)
+
+        is_form_encoded = \
+            headers.get('Content-Type') == 'application/x-www-form-urlencoded'
+
+        if is_form_encoded and body:
+            parameters = oauth.parse_qs(body)
+        else:
+            parameters = None
+
+        req = oauth.Request.from_consumer_and_token(self.consumer, 
+            token=self.token, http_method=method, http_url=uri, 
+            parameters=parameters, body=body, is_form_encoded=is_form_encoded)
+
+        req.sign_request(self.method, self.consumer, self.token)
+
+        schema, rest = urllib.splittype(uri)
+        if rest.startswith('//'):
+            hierpart = '//'
+        else:
+            hierpart = ''
+        host, rest = urllib.splithost(rest)
+
+        realm = schema + ':' + hierpart + host
+
+        #if is_form_encoded: XXX
+        #    body = req.to_postdata()
+        #elif method == "GET":
+        #    uri = req.to_url()
+        #else:
+        #    headers.update(req.to_header(realm=realm))
+        if method == "GET": # XXX
+            uri = req.to_url()
+        else:
+            #body = req.to_postdata()
+            headers.update(req.to_header(realm=realm))
+
+        return httplib2.Http.request(self, uri, method=method, body=body,
+            headers=headers, redirections=redirections,
+            connection_type=connection_type)
+
 class AssistlyAPI(object):
     def __init__(self, base_url, key, secret, token_key=None, token_secret=None, api_version=1, debug_level=0,
             accept_gzip=True, cache_engine=None):
@@ -86,7 +137,7 @@ class AssistlyAPI(object):
             headers['Content-Length'] = str(len(encoded_post_params))
 
         # Sending request and getting the response
-        connection = oauth.Client(self._oauth_consumer, self._oauth_token)
+        connection = OAuthClient(self._oauth_consumer, self._oauth_token)
         response, data = connection.request(full_url, method, body=encoded_post_params, headers=headers)
         data = self._uncompress_zip(response, data)
 
@@ -108,11 +159,11 @@ class AssistlyAPI(object):
 
     def _put(self, url, params=None, query_params=None):
         return self._request_url('PUT', url, query_params, params, using_cache=False, headers={
-            'Accept': '*/*',
-            'Connection': 'close',
+            #'Accept': '*/*',
+            #'Connection': 'close',
             #User-Agent: OAuth gem v0.4.5
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Host': 'marinho.assistly.com',
+            #'Host': 'marinho.assistly.com',
             #'Content-Length': 22,
             })
 
@@ -198,6 +249,41 @@ class AssistlyAPI(object):
             raise ValueError('The parameter "interaction_subject" is required.')
         return AssistlyResponse(self._post('interactions.json', kwargs))
 
+    def customers(self, **kwargs):
+        """
+        The valid kwargs parameters are:
+        - custom_key
+        - since_created_at
+        - max_created_at
+        - since_updated_at
+        - max_updated_at
+        - since_id
+        - max_id
+        - email
+        - twitter
+        - phone
+        - external_id
+        - count
+        - page
+        """
+        return AssistlyResponse(self._get('customers.json', kwargs))
+
+    def customer_create(self, **kwargs):
+        return AssistlyResponse(self._post('customers.json', kwargs))
+
+    def customer_show(self, customer_id, return_response=False):
+        resp = AssistlyResponse(self._get('customers/%s.json'%customer_id))
+        return resp if return_response else resp.customer
+
+    def customer_update(self, customer_id, **kwargs):
+        return AssistlyResponse(self._put('customers/%s.json'%customer_id, kwargs))
+
+    def customer_email_create(self, customer_id, email):
+        return AssistlyResponse(self._post('customers/%s/emails.json'%customer_id, {'email':email}))
+
+    def customer_email_update(self, customer_id, email_id, new_email):
+        return AssistlyResponse(self._put('customers/%s/emails/%s.json'%(customer_id, email_id), {'email':new_email}))
+
 class AssistlyResponse(object):
     def __init__(self, data):
         try:
@@ -230,5 +316,5 @@ class AssistlyResponse(object):
 
     def _return_as_model(self, item):
         model = RESULTS_MODELS.get(item.keys()[0], None)
-        return model(item[item.keys()[0]]) if model else item
+        return model(item[item.keys()[0]]) if model and isinstance(item, dict) else item
 

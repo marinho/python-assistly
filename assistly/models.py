@@ -2,8 +2,11 @@ class Model(object):
     def __init__(self, info):
         self._info = info
 
+        if not isinstance(info, dict): # XXX
+            raise Exception(info)
+
         for k,v in info.items():
-            if k in RESULTS_MODELS and v:
+            if k in RESULTS_MODELS and isinstance(v, dict):
                 v = RESULTS_MODELS[k](v)
             setattr(self, k, v)
 
@@ -30,12 +33,17 @@ class Customer(Model):
     def __str__(self):
         return self.name
 
+class CustomerEmail(Model):
+    def __str__(self):
+        return self.email
+
 RESULTS_MODELS = {
     'user': User,
     'case': Case,
     'topic': Topic,
     'interaction': Interaction,
     'customer': Customer,
+    'email': CustomerEmail,
     }
 
 CASE_STATUS_TYPE_IDS = {

@@ -2,7 +2,7 @@ Basic tests on the API, authentication, etc.
 ============================================
 
     >>> from assistly import AssistlyAPI
-    >>> from assistly.models import User, Case, Topic, Interaction, Customer
+    >>> from assistly.models import User, Case, Topic, Interaction, Customer, CustomerEmail
 
 Cache engine class
 ------------------
@@ -76,8 +76,8 @@ Verifying credentials
     >>> isinstance(api.verify_credentials().user, User)
     True
 
-API methods
------------
+Users
+-----
 
 Getting users
 
@@ -86,6 +86,9 @@ Getting users
     ...     isinstance(user, User)
     True
 
+Topics
+------
+
 Getting topics
 
     >>> topics = api.topics(count=5)
@@ -93,12 +96,14 @@ Getting topics
     ...     isinstance(topic, Topic)
     True
 
+Interactions
+------------
+
 Creating an interaction
 
     >>> response = api.interaction_create(subject='New interaction from the API', customer_email='marinho@gmail.com')
     >>> response.success
     True
-
     >>> isinstance(response.customer, Customer)
     True
     >>> isinstance(response.case, Case)
@@ -112,6 +117,9 @@ Getting interactions
     >>> for interaction in interactions[:1]:
     ...     interaction.id == response.interaction.id
     True
+
+Cases
+-----
 
 Getting cases
 
@@ -133,4 +141,59 @@ Case update
     >>> resp = api.case_update(response.interaction.case_id, case_status_type='open', subject='New subject for this.')
     >>> case = api.case_show(response.interaction.case_id)
     >>> case.case_status_type
+    'open'
+
+Customers
+---------
+
+Creating a customer
+
+    >>> import datetime
+    >>> email = datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S') + '@raminel.com.br'
+    >>> response = api.customer_create(name='Leticia Ribeiro', company='Raminel Sites', email=email)
+    >>> response.success
+    True
+    >>> isinstance(response.customer, Customer)
+    True
+
+Getting customers
+
+    >>> customers = api.customers(count=1)
+    >>> for customer in customers[:1]:
+    ...     isinstance(customer, Customer)
+    True
+
+Customer show
+
+    >>> customer = api.customer_show(response.customer.id)
+    >>> isinstance(customer, Customer)
+    True
+
+Customer update
+
+    >>> response = api.customer_update(response.customer.id, name='Leticia dos Santos')
+    >>> customer = api.customer_show(response.customer.id)
+    >>> print customer.first_name, customer.last_name
+    Leticia dos Santos
+
+Customer email create
+
+    >>> email = datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S') + '@raminel2.com.br'
+    >>> response = api.customer_email_create(response.customer.id, email=email)
+    >>> response.success
+    True
+    >>> isinstance(response.email, CustomerEmail)
+    True
+    >>> response.email.email == email
+    True
+
+Customer email update
+
+    >>> customer = response.customer
+    >>> new_email = datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S') + '@raminel3.com.br'
+    >>> response = api.customer_email_update(customer.id, response.email.id, new_email)
+    >>> isinstance(response.email, CustomerEmail)
+    True
+    >>> response.email.email == new_email
+    True
 
