@@ -74,20 +74,7 @@ class AssistlyAPI(object):
         encoded_query_params = urllib.urlencode(query_params) if query_params else ''
         encoded_post_params = urllib.urlencode(post_params) if post_params else ''
 
-        # OAuth request
-        oauth_params = post_params if method in ('POST','PUT') else query_params
-        req = oauth.Request.from_consumer_and_token(
-                self._oauth_consumer,
-                token=self._oauth_token,
-                http_method=method,
-                http_url=full_url,
-                parameters=oauth_params,
-                )
-        req.sign_request(self._signature_method_hmac_sha1, self._oauth_consumer, self._oauth_token)
-
-        headers = req.to_header()
-        if method in ('POST','PUT'):
-            headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        headers = {}
         if self.accept_gzip and method == 'GET':
             headers['Accept-Encoding'] = 'gzip'
 
@@ -95,7 +82,7 @@ class AssistlyAPI(object):
             full_url = full_url+('?'+encoded_query_params if query_params else '')
 
         # Sending request and getting the response
-        connection = httplib2.Http()
+        connection = oauth.Client(self._oauth_consumer, self._oauth_token)
         response, data = connection.request(full_url, method, body=encoded_post_params, headers=headers)
         data = self._uncompress_zip(response, data)
 
