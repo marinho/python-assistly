@@ -160,7 +160,7 @@ class AssistlyAPI(object):
         return data
 
     def _get(self, url, params=None):
-        return self._request_url('GET', url, params)
+        return self._request_url('GET', url, params, using_cache=False)
 
     def _post(self, url, params=None, query_params=None):
         return self._request_url('POST', url, query_params, params, using_cache=False)
