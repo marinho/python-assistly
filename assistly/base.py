@@ -1,6 +1,7 @@
 import urllib
 import urllib2
 import httplib2
+import logging
 import simplejson
 import oauth2 as oauth
 import gzip
@@ -11,6 +12,8 @@ except ImportError:
     import StringIO
 
 from models import User, Case, Topic, Interaction, Customer, RESULTS_MODELS, CASE_STATUS_TYPE_IDS
+
+log = logging.getLogger("assistly")
 
 class OAuthClient(oauth.Client):
     def request(self, uri, method="GET", body='', headers=None, 
@@ -25,7 +28,8 @@ class OAuthClient(oauth.Client):
                 DEFAULT_POST_CONTENT_TYPE)
 
         is_form_encoded = \
-            headers.get('Content-Type') == 'application/x-www-form-urlencoded'
+            ((headers.get('Content-Type') == 'application/x-www-form-urlencoded') and (method == "POST"))
+
 
         if is_form_encoded and body:
             parameters = oauth.parse_qs(body)
@@ -59,6 +63,8 @@ class OAuthClient(oauth.Client):
             #body = req.to_postdata()
             headers.update(req.to_header(realm=realm))
 
+        log.debug("URI=%s  METHOD=%s  BODY=%s  HEADERS=%s"
+                  % (uri, method, body, headers))
         return httplib2.Http.request(self, uri, method=method, body=body,
             headers=headers, redirections=redirections,
             connection_type=connection_type)
@@ -139,8 +145,10 @@ class AssistlyAPI(object):
         # Sending request and getting the response
         connection = OAuthClient(self._oauth_consumer, self._oauth_token)
         response, data = connection.request(full_url, method, body=encoded_post_params, headers=headers)
+        log.debug("Last request response: %r" % response)
         data = self._uncompress_zip(response, data)
 
+        log.debug("Response data: %r" % data)
         if self.cache_engine and using_cache:
             self.cache_engine.set(key, data)
 
@@ -152,7 +160,7 @@ class AssistlyAPI(object):
         return data
 
     def _get(self, url, params=None):
-        return self._request_url('GET', url, params)
+        return self._request_url('GET', url, params, using_cache=False)
 
     def _post(self, url, params=None, query_params=None):
         return self._request_url('POST', url, query_params, params, using_cache=False)
