@@ -46,6 +46,6 @@ setup(
     license=assistly.__license__,
     packages=packages,
     data_files=data_files,
-    requires=['simplejson','oauth2'],
+    requires=['simplejson','oauth2','httplib2'],
     )
 

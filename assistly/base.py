@@ -1,6 +1,6 @@
 import urllib
 import urllib2
-import httplib
+import httplib2
 import simplejson
 import oauth2 as oauth
 import gzip
@@ -10,7 +10,7 @@ try:
 except ImportError:
     import StringIO
 
-from models import User, Case, Topic, Interaction
+from models import User, Case, Topic, Interaction, Customer, RESULTS_MODELS, CASE_STATUS_TYPE_IDS
 
 class AssistlyAPI(object):
     def __init__(self, base_url, key, secret, token_key=None, token_secret=None, api_version=1, debug_level=0,
@@ -72,10 +72,7 @@ class AssistlyAPI(object):
         # Parameter dictionaries
         query_params = dict([(k,v) for k,v in query_params.items() if v is not None]) if query_params else {}
         encoded_query_params = urllib.urlencode(query_params) if query_params else ''
-
-        host = full_url.split('//')[1].split('/')[0]
-        resource = full_url[full_url.index(host)+len(host):]
-        connection = httplib.HTTPSConnection("%s"%host)
+        encoded_post_params = urllib.urlencode(post_params) if post_params else ''
 
         # OAuth request
         oauth_params = post_params if method in ('POST','PUT') else query_params
@@ -95,27 +92,20 @@ class AssistlyAPI(object):
             headers['Accept-Encoding'] = 'gzip'
 
         if method == 'GET':
-            resource_url = resource+('?'+encoded_query_params if query_params else '')
-        else:
-            resource_url = resource
+            full_url = full_url+('?'+encoded_query_params if query_params else '')
 
         # Sending request and getting the response
-        connection.request(method, resource_url, body=req.to_postdata(), headers=headers)
-        response = connection.getresponse()
-        data = self._uncompress_zip(response)
-
-        if method in ('POST','PUT'):
-            raise Exception(response.getheaders(), data) # XXX
+        connection = httplib2.Http()
+        response, data = connection.request(full_url, method, body=encoded_post_params, headers=headers)
+        data = self._uncompress_zip(response, data)
 
         if self.cache_engine and using_cache:
             self.cache_engine.set(key, data)
 
         return data
 
-    def _uncompress_zip(self, response):
-        data = response.read()
-        headers = dict(response.getheaders())
-        if headers.get('content-encoding', None) == 'gzip':
+    def _uncompress_zip(self, response, data):
+        if response.get('content-encoding', None) == 'gzip':
             data = gzip.GzipFile(fileobj=StringIO.StringIO(data)).read()
         return data
 
@@ -123,18 +113,18 @@ class AssistlyAPI(object):
         return self._request_url('GET', url, params)
 
     def _post(self, url, params=None, query_params=None):
-        return self._request_url('POST', url, query_params, params, debug_level=1, using_cache=False)
+        return self._request_url('POST', url, query_params, params, using_cache=False)
 
     def _put(self, url, params=None, query_params=None):
-        return self._request_url('PUT', url, query_params, params)
+        return self._request_url('PUT', url, query_params, params, using_cache=False)
 
     # API Methods
 
     def verify_credentials(self):
-        return AssistlyResponse(self._get('account/verify_credentials.json'), result_class=User)
+        return AssistlyResponse(self._get('account/verify_credentials.json'))
 
     def users(self, count=None, page=None):
-        return AssistlyResponse(self._get('users.json', {'count':count, 'page':page}), result_class=User)
+        return AssistlyResponse(self._get('users.json', {'count':count, 'page':page}))
 
     def cases(self, **kwargs):
         """
@@ -169,7 +159,16 @@ class AssistlyAPI(object):
         - count
         - page
         """
-        return AssistlyResponse(self._get('cases.json', kwargs), result_class=Case)
+        return AssistlyResponse(self._get('cases.json', kwargs))
+
+    def case_show(self, case_id, by=None, return_response=False):
+        resp = AssistlyResponse(self._get('cases/%s.json'%case_id, {'by':by}))
+        return resp if return_response else resp.case
+
+    def case_update(self, case_id, **kwargs):
+        if 'case_status_type' in kwargs:
+            kwargs['case_status_type_id'] = CASE_STATUS_TYPE_IDS[kwargs.pop('case_status_type')]
+        return AssistlyResponse(self._put('cases/%s.json'%case_id, kwargs))
 
     def topics(self, **kwargs):
         """
@@ -177,7 +176,7 @@ class AssistlyAPI(object):
         - count
         - page
         """
-        return AssistlyResponse(self._get('topics.json', kwargs), result_class=Topic)
+        return AssistlyResponse(self._get('topics.json', kwargs))
 
     def interactions(self, **kwargs):
         """
@@ -193,22 +192,26 @@ class AssistlyAPI(object):
         - count
         - page
         """
-        return AssistlyResponse(self._get('interactions.json', kwargs), result_class=Interaction)
+        return AssistlyResponse(self._get('interactions.json', kwargs))
 
     def interaction_create(self, **kwargs):
         kwargs.setdefault('interaction_subject', kwargs.pop('subject', None))
         if not kwargs.get('interaction_subject', None):
             raise ValueError('The parameter "interaction_subject" is required.')
-        return AssistlyResponse(self._post('interactions.json', kwargs), result_class=Interaction)
+        return AssistlyResponse(self._post('interactions.json', kwargs))
 
 class AssistlyResponse(object):
-    def __init__(self, data, result_class=None):
-        self.json_data = simplejson.loads(data)
-        self.result_class = result_class or None
+    def __init__(self, data):
+        try:
+            self.json_data = simplejson.loads(data)
+        except simplejson.JSONDecodeError:
+            raise Exception(data) # XXX
     
     def __getattr__(self, name):
-        if self.result_class and name == self.result_class.data_key:
-            return self.result_class(self.json_data)
+        if RESULTS_MODELS.get(name, None):
+            value = self.json_data.get(name, None) or self.json_data.get('results', {}).get(name, None)
+            if value:
+                return RESULTS_MODELS[name](value)
 
         try:
             return self.json_data[name]
@@ -217,12 +220,17 @@ class AssistlyResponse(object):
 
     def __iter__(self):
         for item in self.results:
-            yield self.result_class(item) if self.result_class else item
+            yield self._return_as_model(item)
 
     def __getitem__(self, idx):
         items = self.results[idx]
         if isinstance(items, (tuple,list)):
-            return [self.result_class(item) if self.result_class else item for item in items]
+            self._test = True
+            return map(self._return_as_model, items)
         else:
-            return self.result_class(items) if self.result_class else items
+            return self._return_as_model(items)
+
+    def _return_as_model(self, item):
+        model = RESULTS_MODELS.get(item.keys()[0], None)
+        return model(item[item.keys()[0]]) if model else item
 
