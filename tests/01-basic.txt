@@ -130,7 +130,7 @@ Case show
 
 Case update
 
-    >>> resp = api.case_update(response.interaction.case_id, case_status_type='open')
+    >>> resp = api.case_update(response.interaction.case_id, case_status_type='open', subject='New subject for this.')
     >>> case = api.case_show(response.interaction.case_id)
     >>> case.case_status_type
 
