@@ -57,7 +57,8 @@ class AssistlyAPI(object):
         base_url = self.base_url + ('' if self.base_url.endswith('/') else '/')
         return '%s%s'%(base_url, url)
 
-    def _request_url(self, method, url, query_params=None, post_params=None, debug_level=None, using_cache=True):
+    def _request_url(self, method, url, query_params=None, post_params=None, debug_level=None, using_cache=True,
+            headers=None):
         if self.cache_engine and using_cache:
             key = self.cache_engine.make_key(method, url, query_params, post_params)
             data = self.cache_engine.get(key)
@@ -74,12 +75,15 @@ class AssistlyAPI(object):
         encoded_query_params = urllib.urlencode(query_params) if query_params else ''
         encoded_post_params = urllib.urlencode(post_params) if post_params else ''
 
-        headers = {}
+        headers = headers or {}
         if self.accept_gzip and method == 'GET':
             headers['Accept-Encoding'] = 'gzip'
 
         if method == 'GET':
             full_url = full_url+('?'+encoded_query_params if query_params else '')
+
+        if method in ('PUT','POST'):
+            headers['Content-Length'] = str(len(encoded_post_params))
 
         # Sending request and getting the response
         connection = oauth.Client(self._oauth_consumer, self._oauth_token)
@@ -103,7 +107,14 @@ class AssistlyAPI(object):
         return self._request_url('POST', url, query_params, params, using_cache=False)
 
     def _put(self, url, params=None, query_params=None):
-        return self._request_url('PUT', url, query_params, params, using_cache=False)
+        return self._request_url('PUT', url, query_params, params, using_cache=False, headers={
+            'Accept': '*/*',
+            'Connection': 'close',
+            #User-Agent: OAuth gem v0.4.5
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Host': 'marinho.assistly.com',
+            #'Content-Length': 22,
+            })
 
     # API Methods
 
