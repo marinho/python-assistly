@@ -13,7 +13,15 @@ Python language.
 
 ## How to install
 
-Just do the same you usually do:
+You can get the current trunk version from our git respository:
+
+    git clone git@github.com:mochii/python-assistly.git
+    cd python-assistly
+    python setup.py install
+
+### Coming soon
+
+You will just do the same you usually do:
 
     pip install python-assistly
 
@@ -23,12 +31,6 @@ or
 
 or just download the tarball, uncompress and:
 
-    python setup.py install
-
-or you can get the latest trunk version from our GitHub respository:
-
-    git clone git@github.com:mochii/python-assistly.git
-    cd python-assistly
     python setup.py install
 
 ## Dependencies
