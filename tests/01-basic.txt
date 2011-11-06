@@ -189,7 +189,6 @@ Customer email create
 
 Customer email update
 
-    >>> customer = response.customer
     >>> new_email = datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S') + '@raminel3.com.br'
     >>> response = api.customer_email_update(customer.id, response.email.id, new_email)
     >>> isinstance(response.email, CustomerEmail)
