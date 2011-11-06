@@ -108,12 +108,34 @@ Group show
 Topics
 ------
 
+Topic creation
+
+    >>> response = api.topic_create(name='New topic from API', show_in_portal=True, description='Just a sample description.')
+    >>> response.success
+    True
+
 Getting topics
 
     >>> topics = api.topics(count=5)
     >>> for topic in topics[:1]:
     ...     isinstance(topic, Topic)
     True
+
+Topic show
+
+Topic update
+
+Topic destroy
+
+Topic article creation
+
+Topic articles
+
+Article show
+
+Article update
+
+Article destroy
 
 Interactions
 ------------
