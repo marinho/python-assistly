@@ -54,7 +54,13 @@ Starting on the API
     >>> api = AssistlyAPI(cache_engine=cache_engine, base_url='marinho', key=json['key'],
     ...         secret=json['secret'])
     >>> api.base_url
-    'https://marinho.assistly.com/api/v1/'
+    'https://marinho.assistly.com/'
+
+Requesting an access token
+
+    >>> api.request_token()
+    >>> bool(api.token_key) and bool(api.token_secret)
+    True
 
 Setting a token manually
 
@@ -64,12 +70,6 @@ Setting a token manually
 
     >>> api.token_secret == json['token_secret']
     True
-
-Requesting an access token # TODO
-
-    >>> #api.request_token()
-    >>> #api.token_key
-    >>> #api.token_secret
 
 Verifying credentials
 
@@ -236,4 +236,5 @@ Customer email update
     True
     >>> response.email.email == new_email
     True
+
 

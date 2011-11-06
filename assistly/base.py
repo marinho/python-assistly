@@ -5,6 +5,7 @@ import logging
 import simplejson
 import oauth2 as oauth
 import gzip
+from urlparse import parse_qsl
 
 try:
     import CStringIO as StringIO
@@ -70,15 +71,19 @@ class OAuthClient(oauth.Client):
             connection_type=connection_type)
 
 class AssistlyAPI(object):
+    _oauth_consumer = None
+    _oauth_token = None
+
     def __init__(self, base_url, key, secret, token_key=None, token_secret=None, api_version=1, debug_level=0,
             accept_gzip=True, cache_engine=None):
-        self.key = key
-        self.secret = secret
         self.api_version = api_version
         self.base_url = self._make_base_url(base_url)
         self.debug_level = debug_level
         self.accept_gzip = accept_gzip
         self.cache_engine = cache_engine
+
+        if key and secret:
+            self.set_consumer(key, secret)
 
         if token_key and token_secret:
             self.set_token(token_key, token_secret)
@@ -92,26 +97,44 @@ class AssistlyAPI(object):
         if '.assistly.com' not in base_url:
             base_url += '.assistly.com/'
 
-        if '/api/v' not in base_url:
-            base_url += 'api/v%s/'%self.api_version
-
         return base_url
 
     def request_token(self):
-        # TODO
-        self.set_token(None, None)
+        if not self._oauth_consumer:
+            self.set_consumer(self.key, self.secret)
 
-    def set_token(self, token_key, token_secret):
-        self.token_key = token_key
-        self.token_secret = token_secret
+        self.token_key = None
+        self.token_secret = None
+        self._oauth_token = None
 
+        client = OAuthClient(self._oauth_consumer)
+        resp, content = client.request(self._make_url('oauth/request_token', with_api_root=False), 'GET')
+        info = dict(parse_qsl(content))
+
+        self.set_token(info['oauth_token'], info['oauth_token_secret'])
+
+    def set_consumer(self, key, secret):
+        self.key = key
+        self.secret = secret
         self._oauth_consumer = oauth.Consumer(key=self.key, secret=self.secret)
-        self._oauth_token = oauth.Token(key=self.token_key, secret=self.token_secret)
+
         self._signature_method_plaintext = oauth.SignatureMethod_PLAINTEXT()
         self._signature_method_hmac_sha1 = oauth.SignatureMethod_HMAC_SHA1()
 
-    def _make_url(self, url):
+    def set_token(self, token_key, token_secret):
+        if not self._oauth_consumer:
+            self.set_consumer(self.key, self.secret)
+
+        self.token_key = token_key
+        self.token_secret = token_secret
+        self._oauth_token = oauth.Token(key=self.token_key, secret=self.token_secret)
+
+    def _make_url(self, url, with_api_root=True):
         base_url = self.base_url + ('' if self.base_url.endswith('/') else '/')
+
+        if with_api_root and '/api/v' not in base_url:
+            base_url += 'api/v%s/'%self.api_version
+
         return '%s%s'%(base_url, url)
 
     def _request_url(self, method, url, query_params=None, post_params=None, debug_level=None, using_cache=True,
@@ -208,6 +231,9 @@ class AssistlyAPI(object):
 
     def topics(self, **kwargs):
         return AssistlyResponse(self._get('topics.json', kwargs))
+
+    def topic_create(self, **kwargs):
+        return AssistlyResponse(self._post('topics.json', kwargs))
 
     def interactions(self, **kwargs):
         return AssistlyResponse(self._get('interactions.json', kwargs))
