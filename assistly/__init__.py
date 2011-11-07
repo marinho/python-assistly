@@ -3,4 +3,6 @@ __author__ = 'Marinho Brandao'
 __license__ = 'BSD'
 
 from base import AssistlyAPI
+from exceptions import ResourceNotFound
+from models import *
 

@@ -1,7 +1,7 @@
 Basic tests on the API, authentication, etc.
 ============================================
 
-    >>> from assistly import AssistlyAPI
+    >>> from assistly import AssistlyAPI, ResourceNotFound
     >>> from assistly.models import User, Group, Case, Topic, Interaction, Customer, CustomerEmail
 
 Cache engine class
@@ -137,6 +137,14 @@ Topic update
     True
 
 Topic destroy
+
+    >>> response = api.topic_destroy(topic.id)
+    >>> response.success
+    True
+    >>> try:
+    ...     print api.topic_show(topic.id)
+    ... except ResourceNotFound:
+    ...     pass
 
 Topic article creation
 

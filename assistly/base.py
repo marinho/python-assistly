@@ -13,6 +13,7 @@ except ImportError:
     import StringIO
 
 from models import User, Case, Topic, Interaction, Customer, RESULTS_MODELS, CASE_STATUS_TYPE_IDS
+from exceptions import ResourceNotFound
 
 log = logging.getLogger("assistly")
 
@@ -191,13 +192,11 @@ class AssistlyAPI(object):
 
     def _put(self, url, params=None, query_params=None):
         return self._request_url('PUT', url, query_params, params, using_cache=False, headers={
-            #'Accept': '*/*',
-            #'Connection': 'close',
-            #User-Agent: OAuth gem v0.4.5
             'Content-Type': 'application/x-www-form-urlencoded',
-            #'Host': 'marinho.assistly.com',
-            #'Content-Length': 22,
             })
+
+    def _delete(self, url, params=None, query_params=None):
+        return self._request_url('DELETE', url, query_params, params, using_cache=False)
 
     # API Methods
 
@@ -209,21 +208,30 @@ class AssistlyAPI(object):
 
     def user_show(self, user_id, return_response=False):
         resp = AssistlyResponse(self._get('users/%s.json'%user_id))
-        return resp if return_response else resp.user
+        try:
+            return resp if return_response else resp.user
+        except AttributeError:
+            raise ResourceNotFound('User "%s" was not found.'%user_id)
 
     def groups(self, count=None, page=None):
         return AssistlyResponse(self._get('groups.json', {'count':count, 'page':page}))
 
     def group_show(self, group_id, return_response=False):
         resp = AssistlyResponse(self._get('groups/%s.json'%group_id))
-        return resp if return_response else resp.group
+        try:
+            return resp if return_response else resp.group
+        except AttributeError:
+            raise ResourceNotFound('Group "%s" was not found.'%group_id)
 
     def cases(self, **kwargs):
         return AssistlyResponse(self._get('cases.json', kwargs))
 
     def case_show(self, case_id, by=None, return_response=False):
         resp = AssistlyResponse(self._get('cases/%s.json'%case_id, {'by':by}))
-        return resp if return_response else resp.case
+        try:
+            return resp if return_response else resp.case
+        except AttributeError:
+            raise ResourceNotFound('Case "%s" was not found.'%case_id)
 
     def case_update(self, case_id, **kwargs):
         if 'case_status_type' in kwargs:
@@ -236,11 +244,18 @@ class AssistlyAPI(object):
     def topic_create(self, **kwargs):
         return AssistlyResponse(self._post('topics.json', kwargs))
 
-    def topic_show(self, topic_id):
-        return AssistlyResponse(self._get('topics/%s.json'%topic_id)).topic
+    def topic_show(self, topic_id, return_response=False):
+        resp = AssistlyResponse(self._get('topics/%s.json'%topic_id))
+        try:
+            return resp if return_response else resp.topic
+        except AttributeError:
+            raise ResourceNotFound('Topic "%s" was not found.'%topic_id)
 
     def topic_update(self, topic_id, **kwargs):
         return AssistlyResponse(self._put('topics/%s.json'%topic_id, kwargs))
+
+    def topic_destroy(self, topic_id):
+        return AssistlyResponse(self._delete('topics/%s.json'%topic_id))
 
     def interactions(self, **kwargs):
         return AssistlyResponse(self._get('interactions.json', kwargs))
@@ -259,7 +274,10 @@ class AssistlyAPI(object):
 
     def customer_show(self, customer_id, return_response=False):
         resp = AssistlyResponse(self._get('customers/%s.json'%customer_id))
-        return resp if return_response else resp.customer
+        try:
+            return resp if return_response else resp.customer
+        except AttributeError:
+            raise ResourceNotFound('Case "%s" was not found.'%case_id)
 
     def customer_update(self, customer_id, **kwargs):
         return AssistlyResponse(self._put('customers/%s.json'%customer_id, kwargs))
