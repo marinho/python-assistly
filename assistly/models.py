@@ -38,6 +38,10 @@ class Group(Model):
     def __str__(self):
         return self.name
 
+class Article(Model):
+    def __str__(self):
+        return self.subject
+
 RESULTS_MODELS = {
     'user': User,
     'group': Group,
@@ -46,6 +50,7 @@ RESULTS_MODELS = {
     'interaction': Interaction,
     'customer': Customer,
     'email': CustomerEmail,
+    'article': Article,
     }
 
 CASE_STATUS_TYPE_IDS = {

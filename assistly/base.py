@@ -257,6 +257,22 @@ class AssistlyAPI(object):
     def topic_destroy(self, topic_id):
         return AssistlyResponse(self._delete('topics/%s.json'%topic_id))
 
+    def topic_article_create(self, topic_id, **kwargs):
+        return AssistlyResponse(self._post('topics/%s/articles.json'%topic_id, kwargs))
+
+    def topic_articles(self, topic_id, **kwargs):
+        return AssistlyResponse(self._get('topics/%s/articles.json'%topic_id, kwargs))
+
+    def article_show(self, article_id, return_response=False):
+        resp = AssistlyResponse(self._get('articles/%s.json'%article_id))
+        try:
+            return resp if return_response else resp.article
+        except AttributeError:
+            raise ResourceNotFound('Article "%s" was not found.'%article_id)
+
+    def article_update(self, article_id, **kwargs):
+        return AssistlyResponse(self._put('articles/%s.json'%article_id, kwargs))
+
     def interactions(self, **kwargs):
         return AssistlyResponse(self._get('interactions.json', kwargs))
 

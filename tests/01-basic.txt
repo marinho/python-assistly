@@ -2,7 +2,7 @@ Basic tests on the API, authentication, etc.
 ============================================
 
     >>> from assistly import AssistlyAPI, ResourceNotFound
-    >>> from assistly.models import User, Group, Case, Topic, Interaction, Customer, CustomerEmail
+    >>> from assistly.models import User, Group, Case, Topic, Interaction, Customer, CustomerEmail, Article
 
 Cache engine class
 ------------------
@@ -148,11 +148,31 @@ Topic destroy
 
 Topic article creation
 
+    >>> response = api.topic_article_create(topics[0].id, subject='New article')
+    >>> response.success
+    True
+    >>> response.article.subject
+    'New article'
+
 Topic articles
+
+    >>> articles = api.topic_articles(topics[0].id, count=1)
+    >>> isinstance(articles[0], Article)
+    True
 
 Article show
 
+    >>> article = api.article_show(response.article.id)
+    >>> article.subject == response.article.subject
+    True
+
 Article update
+
+    >>> response = api.article_update(response.article.id, subject=response.article.subject.upper())
+    >>> response.success
+    True
+    >>> response.article.subject
+    'NEW ARTICLE'
 
 Article destroy
 
