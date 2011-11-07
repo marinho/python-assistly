@@ -73,13 +73,16 @@ class OAuthClient(oauth.Client):
 class AssistlyAPI(object):
     _oauth_consumer = None
     _oauth_token = None
+    api_version = 1
+    debug_level = 0
+    accept_gzip = True
 
-    def __init__(self, base_url, key, secret, token_key=None, token_secret=None, api_version=1, debug_level=0,
-            accept_gzip=True, cache_engine=None):
-        self.api_version = api_version
+    def __init__(self, base_url, key=None, secret=None, token_key=None, token_secret=None, api_version=1,
+            debug_level=0, accept_gzip=True, cache_engine=None):
+        self.api_version = api_version or self.api_version
         self.base_url = self._make_base_url(base_url)
-        self.debug_level = debug_level
-        self.accept_gzip = accept_gzip
+        self.debug_level = debug_level or self.debug_level
+        self.accept_gzip = accept_gzip or self.accept_gzip
         self.cache_engine = cache_engine
 
         if key and secret:
@@ -234,6 +237,12 @@ class AssistlyAPI(object):
 
     def topic_create(self, **kwargs):
         return AssistlyResponse(self._post('topics.json', kwargs))
+
+    def topic_show(self, topic_id):
+        return AssistlyResponse(self._get('topics/%s.json'%topic_id)).topic
+
+    def topic_update(self, topic_id, **kwargs):
+        return AssistlyResponse(self._put('topics/%s.json'%topic_id, kwargs))
 
     def interactions(self, **kwargs):
         return AssistlyResponse(self._get('interactions.json', kwargs))

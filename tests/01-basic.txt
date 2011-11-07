@@ -113,6 +113,8 @@ Topic creation
     >>> response = api.topic_create(name='New topic from API', show_in_portal=True, description='Just a sample description.')
     >>> response.success
     True
+    >>> response.topic.name
+    'New topic from API'
 
 Getting topics
 
@@ -123,7 +125,16 @@ Getting topics
 
 Topic show
 
+    >>> topic = api.topic_show(response.topic.id)
+    >>> topic.name
+    'New topic from API'
+
 Topic update
+
+    >>> response = api.topic_update(topic.id, name=topic.name.upper())
+    >>> topic = api.topic_show(topic.id)
+    >>> topic.name == topic.name.upper()
+    True
 
 Topic destroy
 
