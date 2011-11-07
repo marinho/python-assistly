@@ -88,6 +88,9 @@ class AssistlyAPI(object):
         if token_key and token_secret:
             self.set_token(token_key, token_secret)
 
+    def _get_client(self):
+        return OAuthClient(self._oauth_consumer, self._oauth_token)
+
     def _make_base_url(self, base_url):
         if base_url.startswith('http://'):
             base_url = 'https://'+base_url[7:]
@@ -103,12 +106,9 @@ class AssistlyAPI(object):
         if not self._oauth_consumer:
             self.set_consumer(self.key, self.secret)
 
-        self.token_key = None
-        self.token_secret = None
-        self._oauth_token = None
-
         client = OAuthClient(self._oauth_consumer)
-        resp, content = client.request(self._make_url('oauth/request_token', with_api_root=False), 'GET')
+        resp, content = self._get_client()\
+            .request(self._make_url('oauth/request_token', with_api_root=False), 'GET')
         info = dict(parse_qsl(content))
 
         self.set_token(info['oauth_token'], info['oauth_token_secret'])
@@ -125,9 +125,7 @@ class AssistlyAPI(object):
         if not self._oauth_consumer:
             self.set_consumer(self.key, self.secret)
 
-        self.token_key = token_key
-        self.token_secret = token_secret
-        self._oauth_token = oauth.Token(key=self.token_key, secret=self.token_secret)
+        self._oauth_token = oauth.Token(key=token_key, secret=token_secret)
 
     def _make_url(self, url, with_api_root=True):
         base_url = self.base_url + ('' if self.base_url.endswith('/') else '/')
@@ -166,8 +164,8 @@ class AssistlyAPI(object):
             headers['Content-Length'] = str(len(encoded_post_params))
 
         # Sending request and getting the response
-        connection = OAuthClient(self._oauth_consumer, self._oauth_token)
-        response, data = connection.request(full_url, method, body=encoded_post_params, headers=headers)
+        response, data = self._get_client()\
+            .request(full_url, method, body=encoded_post_params, headers=headers)
         log.debug("Last request response: %r" % response)
         data = self._uncompress_zip(response, data)
 
