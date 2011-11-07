@@ -59,16 +59,16 @@ Starting on the API
 Requesting an access token
 
     >>> api.request_token()
-    >>> bool(api.token_key) and bool(api.token_secret)
+    >>> bool(api._oauth_token.key) and bool(api._oauth_token.secret)
     True
 
 Setting a token manually
 
     >>> api.set_token(token_key=json['token_key'], token_secret=json['token_secret'])
-    >>> api.token_key == json['token_key']
+    >>> api._oauth_token.key == json['token_key']
     True
 
-    >>> api.token_secret == json['token_secret']
+    >>> api._oauth_token.secret == json['token_secret']
     True
 
 Verifying credentials
