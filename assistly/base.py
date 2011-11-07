@@ -273,6 +273,9 @@ class AssistlyAPI(object):
     def article_update(self, article_id, **kwargs):
         return AssistlyResponse(self._put('articles/%s.json'%article_id, kwargs))
 
+    def article_destroy(self, article_id):
+        return AssistlyResponse(self._delete('articles/%s.json'%article_id))
+
     def interactions(self, **kwargs):
         return AssistlyResponse(self._get('interactions.json', kwargs))
 

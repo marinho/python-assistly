@@ -176,6 +176,15 @@ Article update
 
 Article destroy
 
+    >>> old_article = response.article
+    >>> response = api.article_destroy(old_article.id)
+    >>> response.success
+    True
+    >>> try:
+    ...     print api.article_show(old_article.id)
+    ... except ResourceNotFound:
+    ...     pass
+
 Interactions
 ------------
 
