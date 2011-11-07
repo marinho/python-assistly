@@ -13,7 +13,7 @@ except ImportError:
     import StringIO
 
 from models import User, Case, Topic, Interaction, Customer, RESULTS_MODELS, CASE_STATUS_TYPE_IDS
-from exceptions import ResourceNotFound
+from exceptions import ResourceNotFound, AuthenticationError
 
 log = logging.getLogger("assistly")
 
@@ -147,7 +147,7 @@ class AssistlyAPI(object):
             if data: return data
 
         if not getattr(self, '_oauth_consumer', None):
-            raise Exception('The OAuth consumer is required.')
+            raise AuthenticationError('The OAuth consumer is required.')
 
         debug_level = debug_level if debug_level is not None else self.debug_level
         full_url = self._make_url(url)
@@ -309,10 +309,7 @@ class AssistlyAPI(object):
 
 class AssistlyResponse(object):
     def __init__(self, data):
-        try:
-            self.json_data = simplejson.loads(data)
-        except simplejson.JSONDecodeError:
-            raise Exception(data) # XXX
+        self.json_data = simplejson.loads(data)
     
     def __getattr__(self, name):
         if RESULTS_MODELS.get(name, None):
