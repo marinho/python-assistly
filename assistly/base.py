@@ -308,8 +308,11 @@ class AssistlyAPI(object):
         return AssistlyResponse(self._put('customers/%s/emails/%s.json'%(customer_id, email_id), {'email':new_email}))
 
 class AssistlyResponse(object):
-    def __init__(self, data):
-        self.json_data = simplejson.loads(data)
+    def __init__(self, data=None):
+        if data:
+            self.json_data = simplejson.loads(data)
+        else:
+            self.json_data = {}
     
     def __getattr__(self, name):
         if RESULTS_MODELS.get(name, None):
@@ -325,6 +328,14 @@ class AssistlyResponse(object):
     def __iter__(self):
         for item in self.results:
             yield self._return_as_model(item)
+
+    def __add__(self, other):
+        if isinstance(other, AssistlyResponse):
+            new = AssistlyResponse()
+            new.json_data = self.json_data.copy()
+            new.json_data['results'].extend(other.json_data['results'])
+            return new
+        raise TypeError('AssistlyResponse can sum only to other AssistlyResponse.')
 
     def __getitem__(self, idx):
         items = self.results[idx]
