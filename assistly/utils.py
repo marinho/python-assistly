@@ -33,7 +33,8 @@ class AssistlyResponse(object):
         if isinstance(other, AssistlyResponse):
             new = AssistlyResponse()
             new.json_data = self.json_data.copy()
-            new.json_data['results'].extend(other.json_data['results'])
+            if other.json_data.get('results', None):
+                new.json_data['results'].extend(other.json_data['results'])
             return new
         raise TypeError('AssistlyResponse can sum only to other AssistlyResponse.')
 

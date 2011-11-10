@@ -40,7 +40,7 @@ class Topic(Model):
 
 class Interaction(Model):
     def __str__(self):
-        return self.name
+        return self.name or self.body
 
 class Customer(Model):
     def __str__(self):
