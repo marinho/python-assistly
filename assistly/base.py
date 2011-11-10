@@ -73,9 +73,9 @@ class OAuthClient(oauth.Client):
         if self.disable_ssl_certificate_validation:
             http_inst = httplib2.Http(disable_ssl_certificate_validation=True)
         else:
-            http_inst = httplib2.Http
+            http_inst = httplib2.Http()
 
-        return http_inst.request(self, uri, method=method, body=body,
+        return http_inst.request(uri, method=method, body=body,
             headers=headers, redirections=redirections,
             connection_type=connection_type)
 
