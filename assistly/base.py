@@ -18,6 +18,8 @@ from utils import AssistlyResponse
 log = logging.getLogger("assistly")
 
 class OAuthClient(oauth.Client):
+    disable_ssl_certificate_validation = False
+
     def request(self, uri, method="GET", body='', headers=None, 
         redirections=httplib2.DEFAULT_MAX_REDIRECTS, connection_type=None):
         DEFAULT_POST_CONTENT_TYPE = 'application/x-www-form-urlencoded'
@@ -67,7 +69,13 @@ class OAuthClient(oauth.Client):
 
         log.debug("URI=%s  METHOD=%s  BODY=%s  HEADERS=%s"
                   % (uri, method, body, headers))
-        return httplib2.Http.request(self, uri, method=method, body=body,
+
+        if self.disable_ssl_certificate_validation:
+            http_inst = httplib2.Http(disable_ssl_certificate_validation=True)
+        else:
+            http_inst = httplib2.Http
+
+        return http_inst.request(self, uri, method=method, body=body,
             headers=headers, redirections=redirections,
             connection_type=connection_type)
 
@@ -77,6 +85,7 @@ class AssistlyAPI(object):
     api_version = 1
     debug_level = 0
     accept_gzip = True
+    disable_ssl_certificate_validation = False
 
     def __init__(self, base_url, key=None, secret=None, token_key=None, token_secret=None, api_version=1,
             debug_level=0, accept_gzip=True, cache_engine=None):
@@ -93,7 +102,9 @@ class AssistlyAPI(object):
             self.set_token(token_key, token_secret)
 
     def _get_client(self):
-        return OAuthClient(self._oauth_consumer, self._oauth_token)
+        client = OAuthClient(self._oauth_consumer, self._oauth_token)
+        client.disable_ssl_certificate_validation = self.disable_ssl_certificate_validation
+        return client
 
     def _make_base_url(self, base_url):
         if base_url.startswith('http://'):
@@ -111,6 +122,7 @@ class AssistlyAPI(object):
             self.set_consumer(self.key, self.secret)
 
         client = OAuthClient(self._oauth_consumer)
+        client.disable_ssl_certificate_validation = self.disable_ssl_certificate_validation
         resp, content = self._get_client()\
             .request(self._make_url('oauth/request_token', with_api_root=False), 'GET')
         info = dict(parse_qsl(content))
