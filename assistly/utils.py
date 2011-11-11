@@ -2,7 +2,8 @@ import datetime
 import simplejson
 import oauth2 as oauth
 
-from models import RESULTS_MODELS
+from assistly.models import RESULTS_MODELS
+from assistly import exceptions
 
 class AssistlyResponse(object):
     def __init__(self, data=None):
@@ -10,7 +11,13 @@ class AssistlyResponse(object):
             try:
                 self.json_data = simplejson.loads(data)
             except simplejson.JSONDecodeError:
-                raise Exception(data) # XXX
+                raise exceptions.InvalidReturn(data)
+            
+            if self.json_data.get('errors', None):
+                if self.json_data['errors'] == ['Temporarily Unavailable']:
+                    raise exceptions.TemporarilyUnavailable('Support service is temporarily unavailable.')
+                else:
+                    raise exceptions.AssistlyError(self.json_data['errors'])
         else:
             self.json_data = {}
     
