@@ -44,7 +44,7 @@ class Interaction(Model):
 
 class Customer(Model):
     def __str__(self):
-        return self.name
+        return '%s %s'%(self.first_name, self.last_name)
 
 class CustomerEmail(Model):
     def __str__(self):
