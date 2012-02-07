@@ -53,6 +53,5 @@ setup(
     license=__license__,
     packages=packages,
     data_files=data_files,
-    install_requires=['distribute','simplejson==2.2.1','oauth2==1.5.170','httplib2==0.7.1'],
-    setup_requires=['httplib2==0.7.1'],
+    requires=['simplejson','oauth2','httplib2'],
     )
