@@ -1,5 +1,10 @@
 import datetime
-import simplejson
+
+try:
+    import simplejson
+except ImportError:
+    import json as simplejson
+
 import oauth2 as oauth
 
 from assistly.models import RESULTS_MODELS

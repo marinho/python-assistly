@@ -50,6 +50,10 @@ class CustomerEmail(Model):
     def __str__(self):
         return self.email
 
+class Interactionable(Model):
+    def __str__(self):
+        return self.id
+
 class Group(Model):
     def __str__(self):
         return self.name
@@ -67,6 +71,7 @@ RESULTS_MODELS = {
     'customer': Customer,
     'email': CustomerEmail,
     'article': Article,
+    'interactionable': Interactionable,
     }
 
 CASE_STATUS_TYPE_IDS = {

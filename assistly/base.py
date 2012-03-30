@@ -112,8 +112,8 @@ class AssistlyAPI(object):
         elif not base_url.startswith('https://'):
             base_url = 'https://'+base_url
 
-        if '.assistly.com' not in base_url:
-            base_url += '.assistly.com/'
+        if '.desk.com' not in base_url:
+            base_url += '.desk.com/'
 
         return base_url
 
