@@ -319,3 +319,8 @@ class AssistlyAPI(object):
     def customer_email_update(self, customer_id, email_id, new_email):
         return AssistlyResponse(self._put('customers/%s/emails/%s.json'%(customer_id, email_id), {'email':new_email}))
 
+    def customer_phone_create(self, customer_id, phone):
+        return AssistlyResponse(self._post('customers/%s/phones.json'%customer_id, {'phone':phone}))
+
+    def customer_phone_update(self, customer_id, phone_id, new_phone):
+        return AssistlyResponse(self._put('customers/%s/phones/%s.json'%(customer_id, phone_id), {'email':new_phone}))
